@@ -1,12 +1,13 @@
-from setuptools import setup, find_packages
+from setuptools     import setup, find_packages
 
+from __version__    import __version_str__
 
 with open("README.md") as f:
     long_description = f.read()
 
 setup(  
     name = "chadlib",
-    version = "0.1.1",
+    version = __version_str__,
     description = "Common classes between my projects",
     long_description = long_description,
     long_description_content_type='text/markdown',

@@ -9,14 +9,12 @@ class ControllerBase(ABC):
     RootWindow class.
     """
 
-    WINDOW_TITLE = None
-    DEFAULT_VIEW = None
-    
-    def __init__(self):
-        if self.WINDOW_TITLE is None:
-            raise RuntimeError("Window title must be defined by subclasses.")
+    def __init__(self, title, window_class = RootWindow, default_view = None):
+        self.window = window_class(self, title, default_view)
 
-        self.window = RootWindow(self, self.WINDOW_TITLE, self.DEFAULT_VIEW)
+    @property
+    def current_view(self):
+        return self.window.current_view
 
     def start(self):
         self.window.start()
