@@ -1,5 +1,4 @@
 from logging    import getLogger
-from queue      import Queue
 from selectors  import DefaultSelector, EVENT_READ
 from socket     import socket, SO_REUSEADDR, SOL_SOCKET
 from struct     import calcsize, pack, unpack
@@ -20,15 +19,15 @@ class Connection:
     CONNECT_ATTEMPTS = 3
     SELECT_TIMEOUT_INTERVAL = 0.3
 
-    def __init__(self):
+    def __init__(self, send_queue, receive_queue):
         """
         Put the connection in an uninitialized, inactive, state.
-        TODO CJR:  pass in the queues so they are owned by the application state
         """
         self.socket = None
         self.socket_lock = None
-        self.send_queue = None
-        self.receive_queue = None
+
+        self.send_queue = send_queue
+        self.receive_queue = receive_queue
 
     @property
     def active(self):
@@ -38,17 +37,18 @@ class Connection:
         """
         return self.socket is not None
 
-    def startup_accept(self, port):
+    def startup_accept(self, port, callback):
         """
         Start a listening thread to wait on an incoming connection.
         """
-        self._create_and_run_thread(self._wait_for_connection, (port,))
+        self._create_and_run_thread(self._wait_for_connection, (port,callback))
     
-    def startup_connect(self, port, ip_address):
+    def startup_connect(self, port, ip_address, callback):
         """
         Start a connecting thread to connect to another socket.
         """
-        self._create_and_run_thread(self._connect_to_peer, (port, ip_address))
+        self._create_and_run_thread(self._connect_to_peer, 
+                                    (port, ip_address, callback))
 
     def _create_and_run_thread(self, thread_target, thread_args):
         """
@@ -58,7 +58,7 @@ class Connection:
             t = Thread(target = thread_target, args = thread_args)
             t.start()
 
-    def _wait_for_connection(self, port, *args):
+    def _wait_for_connection(self, port, callback, *args):
         """
         Open a listening socket to wait for incoming peer connection.
 
@@ -74,10 +74,15 @@ class Connection:
         conn, addr = listener.accept()
 
         self._set_socket(conn)
-        getLogger(__name__).info("Connected to peer at {}:{}"
-                                    .format(addr[0], addr[1]))
+        if self.active:
+            getLogger(__name__).info("Connected to peer at {}:{}"
+                                        .format(addr[0], addr[1]))
+            callback()
+        else:
+            getLogger(__name__).info(("Connection could not be established."))
+            
 
-    def _connect_to_peer(self, port, ip_address):
+    def _connect_to_peer(self, port, ip_address, callback):
         """
         Create a socket and attempt to connect to a waiting peer.
         """
@@ -100,6 +105,7 @@ class Connection:
         if connected:
             self._set_socket(conn)
             getLogger(__name__).info("Connection established")
+            callback()
         else:
             getLogger(__name__).info(("Connection could not be established."))
 
@@ -111,8 +117,6 @@ class Connection:
         socket.setblocking(False)
         self.socket = socket
         self.socket_lock = Lock()
-        self.send_queue = Queue()
-        self.receive_queue = Queue()
         # TODO CJR: move this from here, I want separate logic for setting 
         # up a connection and starting to process it.  I already need a place 
         # to call start_data_processing
@@ -147,23 +151,13 @@ class Connection:
 
             # enqueue messages to close blocking send thread and controller
             # get thread from their blocking get calls
+            # TODO CJR:  Is this acceptable given that the connection no 
+            # longer owns the queues?  I might not want to "pollute" them 
+            # with sentinel data
             self.send_queue.put(None)
             self.receive_queue.put(None)
 
-            self.send_queue = None
-            self.receive_queue = None
-
             getLogger(__name__).info("Connection closed.")
-
-    def add_to_send_queue(self, data):
-        """
-        Add the given data to the queue to be sent.
-        """
-        result = False
-        if self.active:
-            self.send_queue.put(data)
-            result = True
-        return result
 
     def get_incoming_data(self):
         """

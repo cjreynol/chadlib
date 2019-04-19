@@ -1,4 +1,4 @@
-from tkinter    import Tk
+from tkinter    import Tk, Menu
 
 
 class RootWindow:
@@ -11,14 +11,18 @@ class RootWindow:
     WINDOW_CLOSE_EVENT = "WM_DELETE_WINDOW"
 
     def __init__(self, controller, application_state, initial_view_class,
-                    window_title):
+                    window_title, menu_data):
         self.controller = controller
         self.root = self._create_root(window_title)
         self.application_state = application_state
+
+        menubar = self._create_menu(menu_data)
+        self.root.config(menu = menubar)
         
         self.current_view = initial_view_class
         if self.current_view is not None:
             self._display_view(self.current_view)
+
 
     def _create_root(self, window_title):
         """
@@ -66,3 +70,19 @@ class RootWindow:
         Force a visual update.
         """
         self.root.update()
+
+    def _create_menu(self, menu_data):
+        """
+        Put together the menu widgets.
+
+        TODO CJR:  Add "accelerator" field to command with keybindings
+        Also add exit application default option
+        """
+        menubar = Menu(self.root)
+        if menu_data is not None:
+            for menu_name, items in menu_data.items():
+                new_menu = Menu(menubar)
+                menubar.add_cascade(label = menu_name, menu = new_menu)
+                for item_name, callback in items:
+                    new_menu.add_command(label = item_name, command = callback)
+        return menubar

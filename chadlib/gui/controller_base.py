@@ -11,8 +11,8 @@ class ControllerBase(ABC):
 
     def __init__(self, title, application_state = None, default_view = None, 
                     window_class = RootWindow):
-        self.window = window_class(self, application_state, 
-                                    default_view, title)
+        self.window = window_class(self, application_state, default_view, 
+                                    title, self._get_menu_data())
         self.application_state = application_state
 
     @property
@@ -27,3 +27,6 @@ class ControllerBase(ABC):
 
     def update(self):
         self.window.update()
+
+    def _get_menu_data(self):
+        pass
