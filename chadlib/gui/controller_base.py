@@ -9,8 +9,11 @@ class ControllerBase(ABC):
     RootWindow class.
     """
 
-    def __init__(self, title, window_class = RootWindow, default_view = None):
-        self.window = window_class(self, title, default_view)
+    def __init__(self, title, application_state = None, default_view = None, 
+                    window_class = RootWindow):
+        self.window = window_class(self, application_state, 
+                                    default_view, title)
+        self.application_state = application_state
 
     @property
     def current_view(self):

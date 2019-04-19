@@ -4,13 +4,13 @@ from tkinter    import Frame
 
 class View(Frame, ABC):
     """
-    Generic widget for creation of views to popuate the applications main 
+    Generic widget for creation of views to populate the application's main 
     window.  
 
     Subclasses are expected to override the create and arrange widget methods.
     """
     
-    def __init__(self, controller, root, *args, **kwargs):
+    def __init__(self, controller, root, application_state, *args, **kwargs):
         """
         Creates the frame for the view, stores the controller, and then steps 
         through the expected actions for the view.
@@ -19,6 +19,7 @@ class View(Frame, ABC):
         """
         super().__init__(root, *args, **kwargs)
         self.controller = controller
+        self.application_state = application_state
 
         self._create_widgets()
         self._arrange_widgets()

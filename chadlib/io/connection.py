@@ -23,6 +23,7 @@ class Connection:
     def __init__(self):
         """
         Put the connection in an uninitialized, inactive, state.
+        TODO CJR:  pass in the queues so they are owned by the application state
         """
         self.socket = None
         self.socket_lock = None
@@ -56,11 +57,14 @@ class Connection:
         if not self.active:
             t = Thread(target = thread_target, args = thread_args)
             t.start()
-            t.join()
 
     def _wait_for_connection(self, port, *args):
         """
         Open a listening socket to wait for incoming peer connection.
+
+        TODO CJR:  Applications can lock up endlessly here if windows are 
+        closed while waiting for a connection.  I should have some mechanism in 
+        close to force this to end.
         """
         getLogger(__name__).info("Waiting for connection on port {}..."
                                     .format(port))
@@ -109,6 +113,10 @@ class Connection:
         self.socket_lock = Lock()
         self.send_queue = Queue()
         self.receive_queue = Queue()
+        # TODO CJR: move this from here, I want separate logic for setting 
+        # up a connection and starting to process it.  I already need a place 
+        # to call start_data_processing
+        self.start()        
 
     def _create_new_socket(self):
         """
