@@ -40,9 +40,10 @@ class TextEntryDialog(Toplevel):
 
         If a validation check was given, ensure it passed before passing the 
         data back.
+        TODO CJR:  Feedback if the validation check fails.
         """
         text = self.text_entry.get()
-        if validation_check is not None and validation_check(text):
+        if self.validation_check is None or self.validation_check(text):
             if self.callback_args is not None:
                 self.callback(text, self.callback_args)
             else:
