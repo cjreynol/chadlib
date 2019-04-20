@@ -1,5 +1,6 @@
 from abc            import ABC, abstractmethod
 
+from .menu_setup    import MenuSetup
 from .root_window   import RootWindow
 
 
@@ -12,7 +13,7 @@ class ControllerBase(ABC):
     def __init__(self, title, application_state = None, default_view = None, 
                     window_class = RootWindow):
         self.window = window_class(self, application_state, default_view, 
-                                    title, self._get_menu_data())
+                                    title, self.get_menu_data())
         self.application_state = application_state
 
     @property
@@ -28,5 +29,12 @@ class ControllerBase(ABC):
     def update(self):
         self.window.update()
 
-    def _get_menu_data(self):
-        pass
+    def get_menu_data(self):
+        """
+        Create the initial menu setup with default actions.
+
+        Expected to be extended by subclasses, not overriden.
+        """
+        menu_setup = MenuSetup()
+        menu_setup.add_submenu_item("Window", "Close Application", self.stop)
+        return menu_setup
