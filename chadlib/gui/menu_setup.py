@@ -1,6 +1,8 @@
-from collections    import OrderedDict
-from platform       import system
-from tkinter        import Menu
+from collections        import OrderedDict
+from platform           import system
+from tkinter            import Menu
+
+from chadlib.utility    import event_wrapper
 
 
 class MenuSetup:
@@ -56,12 +58,5 @@ class MenuSetup:
                     # properly in the menu otherwise
                     new_menu.add_command(label = item_name, command = callback, 
                                     accelerator = shortcut.replace("Key-", ""))
-                    root.bind("<{}>".format(shortcut), 
-                                self._make_event_lambda(callback))
+                    root.bind("<{}>".format(shortcut), event_wrapper(callback))
         return menubar
-
-    def _make_event_lambda(self, function):
-        """
-        Wrap a function to capture and throw away the event argument.
-        """
-        return lambda event: function()
