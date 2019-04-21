@@ -75,9 +75,10 @@ class Connection:
 
         self._set_socket(conn)
         if self.active:
+            callback()
+            self.start()
             getLogger(__name__).info("Connected to peer at {}:{}"
                                         .format(addr[0], addr[1]))
-            callback()
         else:
             getLogger(__name__).info(("Connection could not be established."))
             
@@ -104,8 +105,9 @@ class Connection:
 
         if connected:
             self._set_socket(conn)
-            getLogger(__name__).info("Connection established")
             callback()
+            self.start()
+            getLogger(__name__).info("Connection established")
         else:
             getLogger(__name__).info(("Connection could not be established."))
 
@@ -117,10 +119,6 @@ class Connection:
         socket.setblocking(False)
         self.socket = socket
         self.socket_lock = Lock()
-        # TODO CJR: move this from here, I want separate logic for setting 
-        # up a connection and starting to process it.  I already need a place 
-        # to call start_data_processing
-        self.start()        
 
     def _create_new_socket(self):
         """
@@ -148,14 +146,7 @@ class Connection:
             with self.socket_lock:
                 self.socket = None
             self.socket_lock = None
-
-            # enqueue messages to close blocking send thread and controller
-            # get thread from their blocking get calls
-            # TODO CJR:  Is this acceptable given that the connection no 
-            # longer owns the queues?  I might not want to "pollute" them 
-            # with sentinel data
-            self.send_queue.put(None)
-            self.receive_queue.put(None)
+            self.send_queue.put(None)   # release the send thread
 
             getLogger(__name__).info("Connection closed.")
 
@@ -168,17 +159,6 @@ class Connection:
         if self.active:
             result = self.receive_queue.get()
         return result
-
-    def start_data_processing(self, processing_callback):
-        """
-        Create a thread to service the receive queue with the given callback.
-        """
-        def f():
-            while self.active:
-                data = self.get_incoming_data()
-                if data is not None:
-                    processing_callback(data)
-        Thread(target = f).start()
 
     def _send(self):
         """
