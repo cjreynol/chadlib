@@ -36,5 +36,5 @@ class ControllerBase(ABC):
         Expected to be extended by subclasses, not overriden.
         """
         menu_setup = MenuSetup()
-        menu_setup.add_submenu_item("Window", "Close Application", self.stop)
+        menu_setup.add_submenu_item("Window", "Close Application", self.stop, "{}-w")
         return menu_setup
