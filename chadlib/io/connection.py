@@ -19,13 +19,14 @@ class Connection:
     CONNECT_ATTEMPTS = 3
     SELECT_TIMEOUT_INTERVAL = 0.3
 
-    def __init__(self, send_queue, receive_queue):
+    def __init__(self, controller, send_queue, receive_queue):
         """
         Put the connection in an uninitialized, inactive, state.
         """
         self.socket = None
         self.socket_lock = None
 
+        self.controller = controller
         self.send_queue = send_queue
         self.receive_queue = receive_queue
 
@@ -37,18 +38,18 @@ class Connection:
         """
         return self.socket is not None
 
-    def startup_accept(self, port, callback):
+    def startup_accept(self, port):
         """
         Start a listening thread to wait on an incoming connection.
         """
-        self._create_and_run_thread(self._wait_for_connection, (port,callback))
+        self._create_and_run_thread(self._wait_for_connection, (port,))
     
-    def startup_connect(self, port, ip_address, callback):
+    def startup_connect(self, port, ip_address):
         """
         Start a connecting thread to connect to another socket.
         """
         self._create_and_run_thread(self._connect_to_peer, 
-                                    (port, ip_address, callback))
+                                    (port, ip_address))
 
     def _create_and_run_thread(self, thread_target, thread_args):
         """
@@ -58,7 +59,7 @@ class Connection:
             t = Thread(target = thread_target, args = thread_args)
             t.start()
 
-    def _wait_for_connection(self, port, callback, *args):
+    def _wait_for_connection(self, port, *args):
         """
         Open a listening socket to wait for incoming peer connection.
 
@@ -75,7 +76,7 @@ class Connection:
 
         self._set_socket(conn)
         if self.active:
-            callback()
+            self.controller.start_processing_receive_queue()
             self.start()
             getLogger(__name__).info("Connected to peer at {}:{}"
                                         .format(addr[0], addr[1]))
@@ -83,7 +84,7 @@ class Connection:
             getLogger(__name__).info(("Connection could not be established."))
             
 
-    def _connect_to_peer(self, port, ip_address, callback):
+    def _connect_to_peer(self, port, ip_address):
         """
         Create a socket and attempt to connect to a waiting peer.
         """
@@ -105,7 +106,7 @@ class Connection:
 
         if connected:
             self._set_socket(conn)
-            callback()
+            self.controller.start_processing_receive_queue()
             self.start()
             getLogger(__name__).info("Connection established")
         else:
@@ -146,7 +147,8 @@ class Connection:
             with self.socket_lock:
                 self.socket = None
             self.socket_lock = None
-            self.send_queue.put(None)   # release the send thread
+            self.send_queue.put(None)       # release the send thread
+            self.receive_queue.put(None)    # release the processing thread
 
             getLogger(__name__).info("Connection closed.")
 
@@ -164,6 +166,7 @@ class Connection:
         """
         Loop retrieving data from the send queue and sending it on the socket.
         """
+        getLogger(__name__).debug("Send thread starting.")
         while self.active:
             try:
                 data = self._get_data_from_send_queue()
@@ -175,6 +178,7 @@ class Connection:
                 getLogger(__name__).debug(("Unexpected exception occurred,"
                                 " send thread may be in a corrupted state\n"
                                 "Error: {}".format(err)))
+        getLogger(__name__).debug("Send thread done.")
 
     def _get_data_from_send_queue(self):
         """
@@ -199,6 +203,7 @@ class Connection:
         selector = DefaultSelector()
         selector.register(self.socket, EVENT_READ)
 
+        getLogger(__name__).debug("Receive thread starting.")
         while self.active:
             try:
                 val = selector.select(self.SELECT_TIMEOUT_INTERVAL)
@@ -209,11 +214,12 @@ class Connection:
                         data = self._read_data(header)
                         self.receive_queue.put(data)
                     else:           # connection closed from other end
-                        self.close()
+                        self.controller.disconnect()
             except Exception as err:
                 getLogger(__name__).debug(("Unexpected exception occurred,"
                             " receive thread may be in a corrupted state\n"
                             "Error: {}".format(err)))
+        getLogger(__name__).debug("Receive thread done.")
 
     def _create_data_header(self, data):
         """
