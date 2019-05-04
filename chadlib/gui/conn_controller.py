@@ -24,6 +24,13 @@ class ConnController(ControllerBase):
     def startup_connect(self, ip_address):
         self.connection.startup_connect(self.default_port, ip_address)
 
+    @abstractmethod
+    def connection_start(self):
+        """
+        Used as a hook for the application controller.
+        """
+        pass
+
     def disconnect(self):
         self.connection.close()
 
@@ -40,10 +47,10 @@ class ConnController(ControllerBase):
         Start up the thread to decode drawings and put them on the drawing 
         queue.
         """
-        self.application_state.active = True
+        self.connection_start()
         def f():
             getLogger(__name__).debug("Process thread starting.")
-            while self.application_state.active:
+            while self.connection.active:
                 data = self.receive_queue.get()
                 if data is not None:
                     self.process_received_data(data)
