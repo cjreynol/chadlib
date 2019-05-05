@@ -35,7 +35,7 @@ class SLComponent:
         if not exists(dir_path):
             makedirs(dir_path)
 
-    def open(self):
+    def load(self):
         """
         Prompt the user for a filename and open/load that file.
         """
@@ -43,7 +43,7 @@ class SLComponent:
         filename = askopenfilename(initialdir = self.support_dir, 
                                     filetypes = self.filetypes) 
         if filename is not None:
-            self.controller.open_logic(filename)
+            self.controller.load_logic(filename)
 
     def save(self):
         """
@@ -63,6 +63,6 @@ class SLComponent:
         """
         menu_setup.add_submenu_item("File", "Save Drawings", self.save, 
                                     "{}-s")
-        menu_setup.add_submenu_item("File", "Load Drawings", self.open, 
-                                    "{}-o")
+        menu_setup.add_submenu_item("File", "Load Drawings", self.load, 
+                                    "{}-l")
         return menu_setup

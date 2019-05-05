@@ -8,7 +8,7 @@ class SLController(ABC):
     """
 
     @abstractmethod
-    def open_logic(self, filename):
+    def load_logic(self, filename):
         """
         Placeholder to be overridden by subclasses, intended to take load 
         data from the chosen filename.

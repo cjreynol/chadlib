@@ -67,29 +67,32 @@ class Connection:
         closed while waiting for a connection.  I should have some mechanism in 
         close to force this to end.
         """
-        getLogger(__name__).info("Waiting for connection on port {}..."
-                                    .format(port))
+        getLogger(__name__).info("Waiting for connection...")
+        getLogger(__name__).debug("Listening on port:  {}".format(port))
         listener = self._create_new_socket()
         listener.bind(("", port))
         listener.listen(1)
         conn, addr = listener.accept()
 
+        listener.close()    # TODO CJR:  Is this needed?
         self._set_socket(conn)
         if self.active:
             self.controller.start_processing_receive_queue()
             self.start()
-            getLogger(__name__).info("Connected to peer at {}:{}"
+            getLogger(__name__).info("Connection accepted")
+            getLogger(__name__).debug("Connected to peer at {}:{}"
                                         .format(addr[0], addr[1]))
         else:
-            getLogger(__name__).info(("Connection could not be established."))
+            getLogger(__name__).warning(("Connection could not be "
+                                            "established."))
             
 
     def _connect_to_peer(self, port, ip_address):
         """
         Create a socket and attempt to connect to a waiting peer.
         """
-        getLogger(__name__).info("Attempting to connect to peer {}:{}..."
-                                    .format(ip_address, port))
+        getLoger(__name__).info("Attempting to connect...")
+        getLogger(__name__).debug("Peer at {}:{}".format(ip_address, port))
         conn = self._create_new_socket()
         connected = False
 
@@ -99,8 +102,8 @@ class Connection:
                 connected = True
                 break
             except (ConnectionRefusedError, OSError):
-                getLogger(__name__).info("Attempt {}/{} failed"
-                                            .format(i + 1, self.CONNECT_ATTEMPTS))
+                getLogger(__name__).debug("Attempt {}/{} failed"
+                                        .format(i + 1, self.CONNECT_ATTEMPTS))
                 if i < self.CONNECT_ATTEMPTS:
                     sleep(i + 1)
 
@@ -110,7 +113,8 @@ class Connection:
             self.start()
             getLogger(__name__).info("Connection established")
         else:
-            getLogger(__name__).info(("Connection could not be established."))
+            getLogger(__name__).warning(("Connection could not be "
+                                            "established."))
 
     def _set_socket(self, socket):
         """
@@ -175,7 +179,7 @@ class Connection:
                     with self.socket_lock:
                         self.socket.sendall(header + data)
             except Exception as err:
-                getLogger(__name__).debug(("Unexpected exception occurred,"
+                getLogger(__name__).warning(("Unexpected exception occurred,"
                                 " send thread may be in a corrupted state\n"
                                 "Error: {}".format(err)))
         getLogger(__name__).debug("Send thread done.")
@@ -216,7 +220,7 @@ class Connection:
                     else:           # connection closed from other end
                         self.controller.disconnect()
             except Exception as err:
-                getLogger(__name__).debug(("Unexpected exception occurred,"
+                getLogger(__name__).warning(("Unexpected exception occurred,"
                             " receive thread may be in a corrupted state\n"
                             "Error: {}".format(err)))
         getLogger(__name__).debug("Receive thread done.")

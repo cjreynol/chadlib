@@ -2,9 +2,9 @@
 
 class Stack:
     """
-    A standard stack data structure that supports push, pull, pop operations.
+    A standard stack data structure that supports peek, pop, push operations.
 
-    List based version.
+    List based version where the tail end of the list is the top of the stack.
     """
     
     def __init__(self, *args):
@@ -25,3 +25,9 @@ class Stack:
 
     def clear(self):
         self.data = list()
+
+    def __str__(self):
+        return str(self.data)
+
+    def __repr__(self):
+        return repr(self.data)
