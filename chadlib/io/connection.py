@@ -91,7 +91,7 @@ class Connection:
         """
         Create a socket and attempt to connect to a waiting peer.
         """
-        getLoger(__name__).info("Attempting to connect...")
+        getLogger(__name__).info("Attempting to connect...")
         getLogger(__name__).debug("Peer at {}:{}".format(ip_address, port))
         conn = self._create_new_socket()
         connected = False

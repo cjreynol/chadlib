@@ -42,7 +42,7 @@ class SLComponent:
         self.ensure_dir_exists(self.support_dir)
         filename = askopenfilename(initialdir = self.support_dir, 
                                     filetypes = self.filetypes) 
-        if filename is not None:
+        if filename is not None and filename != "":
             self.controller.load_logic(filename)
 
     def save(self):
@@ -54,7 +54,7 @@ class SLComponent:
                                         defaultextension = 
                                             self.file_extension,
                                         filetypes = self.filetypes) 
-        if filename is not None:
+        if filename is not None and filename != "":
             self.controller.save_logic(filename)
 
     def get_menu_data(self, menu_setup):
