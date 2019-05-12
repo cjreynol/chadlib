@@ -24,6 +24,7 @@ class Connection:
         Put the connection in an uninitialized, inactive, state.
         """
         self.socket = None
+        self.listener = None
         self.socket_lock = None
 
         self.controller = controller
@@ -69,22 +70,25 @@ class Connection:
         """
         getLogger(__name__).info("Waiting for connection...")
         getLogger(__name__).debug("Listening on port:  {}".format(port))
-        listener = self._create_new_socket()
-        listener.bind(("", port))
-        listener.listen(1)
-        conn, addr = listener.accept()
+        self.listener = self._create_new_socket()
+        self.listener.bind(("", port))
+        self.listener.listen(1)
+        conn = None
+        try:
+            conn, addr = self.listener.accept()
+        except OSError as err:  # expected error if the listener socket is
+            pass                # closed during the accept call
 
-        listener.close()    # TODO CJR:  Is this needed?
-        self._set_socket(conn)
+        if conn is not None:
+            self._set_socket(conn)
         if self.active:
             self.controller.start_processing_receive_queue()
             self.start()
-            getLogger(__name__).info("Connection accepted")
+            getLogger(__name__).info("Connection accepted.")
             getLogger(__name__).debug("Connected to peer at {}:{}"
                                         .format(addr[0], addr[1]))
         else:
-            getLogger(__name__).warning(("Connection could not be "
-                                            "established."))
+            getLogger(__name__).warning(("No connection was established."))
             
 
     def _connect_to_peer(self, port, ip_address):
@@ -111,10 +115,9 @@ class Connection:
             self._set_socket(conn)
             self.controller.start_processing_receive_queue()
             self.start()
-            getLogger(__name__).info("Connection established")
+            getLogger(__name__).info("Connection established.")
         else:
-            getLogger(__name__).warning(("Connection could not be "
-                                            "established."))
+            getLogger(__name__).warning(("No connection was established."))
 
     def _set_socket(self, socket):
         """
@@ -146,9 +149,14 @@ class Connection:
         Release resources held by the connection, putting it back into an 
         uninitialized state.
         """
+        if self.listener is not None:
+            self.listener.close()
+            self.listener = None
+            getLogger(__name__).info("Listener closed.")
+
         if self.active:
-            self.socket.close()
             with self.socket_lock:
+                self.socket.close()
                 self.socket = None
             self.socket_lock = None
             self.send_queue.put(None)       # release the send thread
@@ -213,8 +221,10 @@ class Connection:
                 val = selector.select(self.SELECT_TIMEOUT_INTERVAL)
                 if val:
                     with self.socket_lock:
-                        header = self.socket.recv(self.HEADER_SIZE)
-                    if header:
+                        header = None       # protecting against close error
+                        if self.socket is not None: 
+                            header = self.socket.recv(self.HEADER_SIZE)
+                    if header and header is not None:
                         data = self._read_data(header)
                         self.receive_queue.put(data)
                     else:           # connection closed from other end

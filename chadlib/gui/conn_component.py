@@ -62,4 +62,4 @@ class ConnComponent:
         return menu_setup
 
     def stop(self):
-        self.connection.close()
+        self.disconnect()
