@@ -27,6 +27,7 @@ class ConnComponent:
         self.connection.startup_connect(self.default_port, ip_address)
 
     def disconnect(self):
+        self.controller.disconnect()
         self.connection.close()
 
     def get_ip(self):

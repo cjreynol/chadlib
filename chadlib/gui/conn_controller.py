@@ -21,3 +21,10 @@ class ConnController(ABC):
         Overridden by subclasses to handle data from the receive queue.
         """
         pass
+
+    def disconnect(self):
+        """
+        Can be overridden by subclass as a hook to act when the connection 
+        disconnects itself or is disconnected from.
+        """
+        pass
