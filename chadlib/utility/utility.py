@@ -1,5 +1,5 @@
 """
-Helpful functions that do not belong to a particular data structure.
+Helpful functions that do not belong to a data structure or other set.
 """
 
 
