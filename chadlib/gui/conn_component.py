@@ -4,7 +4,7 @@ from threading          import Thread
 from chadlib.io         import Connection
 
 from .conn_controller   import ConnController
-from .text_entry_dialog import TextEntryDialog
+from .dialog            import TextEntryDialog
 
 
 class ConnComponent:

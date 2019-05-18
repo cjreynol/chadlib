@@ -64,7 +64,9 @@ class Dialog(Toplevel, ABC):
         TODO CJR:  Feedback if the validation check fails.
         """
         data = self._get_data()
-        if self._validation_check is None or self._validation_check(data):
+        if (data is not None 
+            and (self._validation_check is None 
+                or self._validation_check(data))):
             if self._callback_args is not None:
                 self._callback(data, self._callback_args)
             else:
