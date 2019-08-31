@@ -23,6 +23,7 @@ class Dialog(Toplevel, ABC):
         self._arrange_widgets()
         self._bind_actions()
 
+    @abstractmethod
     def _create_widgets(self):
         """
         Create the widgets for the dialog.

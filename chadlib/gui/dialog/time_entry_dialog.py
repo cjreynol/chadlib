@@ -1,8 +1,5 @@
-from datetime           import timedelta
-from tkinter            import Entry
-from tkinter.messagebox import showwarning
-
-from .dialog            import Dialog
+from .time_entry    import TimeEntry
+from .dialog        import Dialog
 
 
 class TimeEntryDialog(Dialog):
@@ -17,32 +14,12 @@ class TimeEntryDialog(Dialog):
     
     def _create_widgets(self):
         super()._create_widgets()
-
-        self.hour_entry = Entry(self)
-        self.minute_entry = Entry(self)
-        self.second_entry = Entry(self)
+        self.time_entry = TimeEntry()
 
     def _arrange_widgets(self):
-        self.hour_entry.grid(row = 0, column = 0)
-        self.minute_entry.grid(row = 0, column = 1)
-        self.second_entry.grid(row = 0, column = 2)
-
+        self.time_entry.grid(row = 0, column = 0, columnspan = 3)
         self.confirm_button.grid(row = 1, column = 0)
         self.cancel_button.grid(row = 1, column = 2)
 
     def _get_data(self):
-        time_obj = None
-        try:
-            h = self.hour_entry.get()
-            m = self.minute_entry.get()
-            s = self.second_entry.get()
-
-            if h == "": h = 0
-            if m == "": m = 0
-            if s == "": s = 0
-
-            time_obj = timedelta(hours = h, minutes = m, seconds = s)
-        except TypeError as err:
-            showwarning("Error creating time object", str(err), parent = self)
-
-        return time_obj
+        return self.time_entry.get()

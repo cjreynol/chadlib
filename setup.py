@@ -8,7 +8,7 @@ with open("README.md") as f:
 setup(  
     name = "chadlib",
     version = __version_str__,
-    description = "Common classes between my projects",
+    description = "Common classes between projects",
     long_description = long_description,
     long_description_content_type='text/markdown',
     author = "Chad Reynolds",
